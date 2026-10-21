@@ -1,0 +1,12 @@
+<launch>
+  <arg name="config_file" default="$(find vins)/config/realsense/m3dgr.yaml"/>
+  <arg name="output_path" default="$(env HOME)/.ros/elevator_slam/vio"/>
+  <arg name="image_sync_tolerance" default="0.003"/>
+  <arg name="detector_wait_timeout" default="0.5"/>
+  <node pkg="vins" type="vins_node" name="vins_estimator" output="screen" required="true">
+    <param name="config_file" value="$(arg config_file)"/>
+    <param name="output_path" value="$(arg output_path)"/>
+    <param name="image_sync_tolerance" value="$(arg image_sync_tolerance)"/>
+    <param name="detector_wait_timeout" value="$(arg detector_wait_timeout)"/>
+  </node>
+</launch>

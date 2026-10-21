@@ -1,0 +1,4 @@
+[submodule "src/lio"]
+	path = src/lio
+	url = git@github.com:Silvernoon/Elevator-LIO.git
+	branch = main

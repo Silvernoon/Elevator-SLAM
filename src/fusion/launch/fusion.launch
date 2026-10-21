@@ -1,0 +1,10 @@
+<launch>
+  <arg name="enable_vio" default="true" />
+  <arg name="config" default="$(find elevator_fusion)/config/fusion.yaml" />
+  <arg name="extrinsics_file" default="" />
+  <node pkg="elevator_fusion" type="trajectory_fusion" name="trajectory_fusion" output="screen" required="true">
+    <rosparam command="load" file="$(arg config)" />
+    <rosparam if="$(eval arg('extrinsics_file') != '')" command="load" file="$(arg extrinsics_file)" />
+    <param name="enable_vio" value="$(arg enable_vio)" />
+  </node>
+</launch>

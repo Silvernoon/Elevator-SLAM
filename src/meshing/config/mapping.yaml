@@ -1,0 +1,10 @@
+# Camera intrinsics/extrinsics must come from the actual rig calibration, not a guessed default.
+color_enabled: true
+world_frame: fusion_world
+imu_frame: fusion_imu
+image_tolerance: 0.05
+maximum_pose_gap: 0.2
+queue_size: 200
+minimum_point_distance: 0.1
+meshing_voxel_size: 0.4
+points_per_scan: 5000

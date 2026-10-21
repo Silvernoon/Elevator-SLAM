@@ -1,0 +1,13 @@
+# Source poses must be interpolated to the scan-end timestamp. No extrapolation.
+max_vio_gap: 0.15
+max_wait: 0.2
+world_frame: fusion_world
+body_frame: fusion_imu
+geometry:
+  min_points: 11
+  min_singular_value: 7.0
+  min_mean_singular_value: 10.0
+
+# With enable_vio=true, load a calibrated imu_lio_T_imu_vio parameter too:
+# [tx, ty, tz, qx, qy, qz, qw], transforming VIO-IMU coordinates into LIO-IMU.
+# There is deliberately no identity/default cross-IMU calibration.

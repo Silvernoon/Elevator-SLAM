@@ -1,0 +1,12 @@
+<launch>
+  <arg name="odometry_topic" default="/fusion/odometry" />
+  <arg name="position_topic" default="/tag_Odometry" />
+  <arg name="global_frame" default="global_world" />
+  <arg name="position_sigma" default="0.1" />
+  <node pkg="global_fusion" type="global_fusion_node" name="global_fusion" output="screen">
+    <remap from="/fusion/odometry" to="$(arg odometry_topic)" />
+    <remap from="/tag_Odometry" to="$(arg position_topic)" />
+    <param name="global_frame" value="$(arg global_frame)" />
+    <param name="position_sigma" value="$(arg position_sigma)" />
+  </node>
+</launch>

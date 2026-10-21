@@ -1,0 +1,9 @@
+std_msgs/Header header
+uint8 SOURCE_LIO=0
+uint8 SOURCE_VIO=1
+uint8 source
+string reason
+bool degenerate
+float64[3] normal_singular_values
+uint32 effective_points
+bool in_elevator
