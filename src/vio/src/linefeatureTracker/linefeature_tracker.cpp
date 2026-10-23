@@ -10,7 +10,7 @@ LineFeatureTracker::LineFeatureTracker()
 //line
 void LineFeatureTracker::readIntrinsicParameterline(const string &calib_file)
 {
-    ROS_INFO("reading paramerter of camera %s", calib_file.c_str());
+    RCLCPP_INFO(rclcpp::get_logger("vins_estimator"), "reading paramerter of camera %s", calib_file.c_str());
 
     n_camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file);
     K_ = n_camera->initUndistortRectifyMap(undist_map1_, undist_map2_);

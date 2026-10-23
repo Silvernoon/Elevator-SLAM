@@ -34,7 +34,7 @@ void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d *Bgs)
         b += tmp_A.transpose() * tmp_b;
     }
     delta_bg = A.ldlt().solve(b);
-    ROS_WARN_STREAM("gyroscope bias initial calibration " << delta_bg.transpose());
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("vins_estimator"), "gyroscope bias initial calibration " << delta_bg.transpose());
 
     for (int i = 0; i <= WINDOW_SIZE; i++)
         Bgs[i] += delta_bg;
@@ -252,9 +252,9 @@ bool LinearAlignment(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vect
     b = b * 1000.0;
     x = A.ldlt().solve(b);
     double s = x(n_state - 1) / 100.0;
-    ROS_INFO("estimated scale: %f", s);
+    RCLCPP_INFO(rclcpp::get_logger("vins_estimator"), "estimated scale: %f", s);
     g = x.segment<3>(n_state - 4);
-    ROS_DEBUG_STREAM(" result g     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " result g     " << g.norm() << " " << g.transpose());
     if (fabs(g.norm() - G.norm()) > 0.5 || s < 0)
     {
         return false;
@@ -263,7 +263,7 @@ bool LinearAlignment(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vect
     RefineGravity(all_image_frame, g, x);
     s = (x.tail<1>())(0) / 100.0;
     (x.tail<1>())(0) = s;
-    ROS_DEBUG_STREAM(" refine     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " refine     " << g.norm() << " " << g.transpose());
     if (s < 0.0)
         return false;
     else
@@ -409,9 +409,9 @@ bool LinearAlignmentWithWheel(map<double, ImageFrame> &all_image_frame, Vector3d
     b = b * 1000.0;
     x = A.ldlt().solve(b);
     double s = x(n_state - 1) / 100.0;
-    ROS_DEBUG("estimated scale: %f", s);
+    RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "estimated scale: %f", s);
     g = x.segment<3>(n_state - 4);
-    ROS_DEBUG_STREAM(" result g     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " result g     " << g.norm() << " " << g.transpose());
     if (fabs(g.norm() - G.norm()) > 0.5 || s < 0)
     {
         return false;
@@ -420,7 +420,7 @@ bool LinearAlignmentWithWheel(map<double, ImageFrame> &all_image_frame, Vector3d
     RefineGravityWithWheel(all_image_frame, g, x);
     s = (x.tail<1>())(0) / 100.0;
     (x.tail<1>())(0) = s;
-    ROS_DEBUG_STREAM(" refine     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " refine     " << g.norm() << " " << g.transpose());
     return s >= 0.0;
 }
 
@@ -567,7 +567,7 @@ bool LinearAlignmentWithWD(map<double, ImageFrame> &all_image_frame, Vector3d &g
     RefineGravityWithWD(all_image_frame, g, x);
     // s = (x.tail<1>())(0) / 100.0;
     //(x.tail<1>())(0) = s;
-    ROS_DEBUG_STREAM(" refine     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " refine     " << g.norm() << " " << g.transpose());
     return true;
 }
 
@@ -624,7 +624,7 @@ bool LinearAlignmentWithDepth(map<double, ImageFrame> &all_image_frame, Vector3d
     x = A.ldlt().solve(b);
 
     g = x.segment<3>(n_state - 3);
-    ROS_DEBUG_STREAM(" result g     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " result g     " << g.norm() << " " << g.transpose());
     if (fabs(g.norm() - G.norm()) > 1.0)
     {
         return false;
@@ -632,7 +632,7 @@ bool LinearAlignmentWithDepth(map<double, ImageFrame> &all_image_frame, Vector3d
 
     RefineGravityWithDepth(all_image_frame, g, x);
 
-    ROS_DEBUG_STREAM(" refine     " << g.norm() << " " << g.transpose());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), " refine     " << g.norm() << " " << g.transpose());
 
     return true;
 }

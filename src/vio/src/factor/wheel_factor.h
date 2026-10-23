@@ -8,7 +8,7 @@
  *******************************************************/
 
 #pragma once
-#include <ros/assert.h>
+#include <rclcpp/rclcpp.hpp>
 #include <iostream>
 #include <eigen3/Eigen/Dense>
 
@@ -100,7 +100,7 @@ class WheelFactor : public ceres::SizedCostFunction<6, 7, 7, 7, 1, 1, 1, 1>
             double dtd = td - pre_integration->linearized_td;
             if (pre_integration->jacobian.maxCoeff() > 1e8 || pre_integration->jacobian.minCoeff() < -1e8)
             {
-                ROS_WARN("numerical unstable in preintegration");
+                RCLCPP_WARN(rclcpp::get_logger("vins"), "numerical unstable in preintegration");
                 //std::cout << pre_integration->jacobian << std::endl;
 ///                ROS_BREAK();
             }
@@ -140,7 +140,7 @@ class WheelFactor : public ceres::SizedCostFunction<6, 7, 7, 7, 1, 1, 1, 1>
 
                 if (jacobian_pose_i.maxCoeff() > 1e8 || jacobian_pose_i.minCoeff() < -1e8)
                 {
-                    ROS_WARN("numerical unstable in preintegration");
+                    RCLCPP_WARN(rclcpp::get_logger("vins"), "numerical unstable in preintegration");
                     //std::cout << sqrt_info << std::endl;
                     //ROS_BREAK();
                 }

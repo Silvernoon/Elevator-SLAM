@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include "../utility/utility.h"
@@ -152,7 +152,7 @@ extern uint32_t GNSS_TRACK_NUM_THRES;
 extern double GNSS_DDT_WEIGHT;
 extern std::string GNSS_RESULT_PATH;
 
-void readParameters(std::string config_file);
+void readParameters(const rclcpp::Node::SharedPtr &node, const std::string &config_file);
 
 enum SIZE_PARAMETERIZATION
 {

@@ -171,7 +171,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "temporal optical flow costs: %fms", t_o.toc());
         // printf("track cnt %d\n", (int)ids.size());
     }
 
@@ -181,12 +181,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
     if (1)
     {
         // rejectWithF();
-        ROS_DEBUG("set mask begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "set mask begins");
         TicToc t_m;
         setMask();
-        ROS_DEBUG("set mask costs %fms", t_m.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "set mask costs %fms", t_m.toc());
 
-        ROS_DEBUG("detect feature begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "detect feature begins");
         TicToc t_t;
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
         if (n_max_cnt > 0)
@@ -199,12 +199,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         }
         else
             n_pts.clear();
-        ROS_DEBUG("detect feature costs: %fms", t_t.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "detect feature costs: %fms", t_t.toc());
 
-        ROS_DEBUG("add feature begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "add feature begins");
         TicToc t_a;
         addPoints();
-        ROS_DEBUG("selectFeature costs: %fms", t_a.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "selectFeature costs: %fms", t_a.toc());
     }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
@@ -371,7 +371,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
     return featureFrame;
 }
 
-map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackImagebox(double _cur_time, const darknet_ros_msgs::BoundingBoxesConstPtr &_boxes, const cv::Mat &_img, const cv::Mat &_img1)
+map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackImagebox(double _cur_time, const darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr &_boxes, const cv::Mat &_img, const cv::Mat &_img1)
 {
     TicToc t_r;
     cur_time = _cur_time;
@@ -442,7 +442,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "temporal optical flow costs: %fms", t_o.toc());
         // printf("track cnt %d\n", (int)ids.size());
     }
 
@@ -452,12 +452,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
     if (1)
     {
         // rejectWithF();
-        ROS_DEBUG("set mask begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "set mask begins");
         TicToc t_m;
         setMask();
-        ROS_DEBUG("set mask costs %fms", t_m.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "set mask costs %fms", t_m.toc());
 
-        ROS_DEBUG("detect feature begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "detect feature begins");
         TicToc t_t;
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
         if (n_max_cnt > 0)
@@ -470,12 +470,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
         }
         else
             n_pts.clear();
-        ROS_DEBUG("detect feature costs: %fms", t_t.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "detect feature costs: %fms", t_t.toc());
 
-        ROS_DEBUG("add feature begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "add feature begins");
         TicToc t_a;
         addPoints();
-        ROS_DEBUG("selectFeature costs: %fms", t_a.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "selectFeature costs: %fms", t_a.toc());
     }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
@@ -562,14 +562,14 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
             velocity_y = pts_velocity[i].y;
 
             // 在这里加入box的遍历，判断是否在轮廓内即可
-            darknet_ros_msgs::BoundingBoxesConstPtr boxes = _boxes;
+            darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr boxes = _boxes;
 
-            darknet_ros_msgs::BoundingBox box = boxes->bounding_boxes.front();
+            darknet_ros_msgs::msg::BoundingBox box = boxes->bounding_boxes.front();
             int lengh = boxes->bounding_boxes.size();
             int insidebox = 0;
             for (int j = 0; j < lengh; j++)
             {
-                darknet_ros_msgs::BoundingBox box = boxes->bounding_boxes[j];
+                darknet_ros_msgs::msg::BoundingBox box = boxes->bounding_boxes[j];
                 int xmin = box.xmin;
                 int ymin = box.ymin;
                 int xmax = box.xmax;
@@ -628,14 +628,14 @@ map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> FeatureTracker::trackIm
             // cout << "depth value" << depth_value << endl;
 
             // 在这里加入box的遍历，判断是否在轮廓内即可
-            darknet_ros_msgs::BoundingBoxesConstPtr boxes = _boxes;
+            darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr boxes = _boxes;
 
-            darknet_ros_msgs::BoundingBox box = boxes->bounding_boxes.front();
+            darknet_ros_msgs::msg::BoundingBox box = boxes->bounding_boxes.front();
             int lengh = boxes->bounding_boxes.size();
             int insidebox = 0;
             for (int j = 0; j < lengh; j++)
             {
-                darknet_ros_msgs::BoundingBox box = boxes->bounding_boxes[j];
+                darknet_ros_msgs::msg::BoundingBox box = boxes->bounding_boxes[j];
                 int xmin = box.xmin;
                 int ymin = box.ymin;
                 int xmax = box.xmax;
@@ -712,7 +712,7 @@ void FeatureTracker::rejectWithF()
 {
     if (cur_pts.size() >= 8)
     {
-        ROS_DEBUG("FM ransac begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "FM ransac begins");
         TicToc t_f;
         vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
         for (unsigned int i = 0; i < cur_pts.size(); i++)
@@ -737,8 +737,8 @@ void FeatureTracker::rejectWithF()
         reduceVector(cur_un_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
-        ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "FM ransac costs: %fms", t_f.toc());
     }
 }
 
@@ -747,7 +747,7 @@ void FeatureTracker::readIntrinsicParameter(const vector<string> &calib_file, co
     for (size_t i = 0; i < calib_file.size(); i++)
     {
 
-        ROS_INFO("reading paramerter of camera %s", calib_file[i].c_str());
+        RCLCPP_INFO(rclcpp::get_logger("vins_estimator"), "reading paramerter of camera %s", calib_file[i].c_str());
         camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file[i]);
         std::cout << "Testky" << std::endl;
 
@@ -904,7 +904,7 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     cv::waitKey(2);
 }
 
-void FeatureTracker::drawTrackbox(const darknet_ros_msgs::BoundingBoxesConstPtr &_boxes, const cv::Mat &imLeft, const cv::Mat &imRight,
+void FeatureTracker::drawTrackbox(const darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr &_boxes, const cv::Mat &imLeft, const cv::Mat &imRight,
                                   vector<int> &curLeftIds,
                                   vector<cv::Point2f> &curLeftPts,
                                   vector<cv::Point2f> &curRightPts,
@@ -957,13 +957,13 @@ void FeatureTracker::drawTrackbox(const darknet_ros_msgs::BoundingBoxesConstPtr 
     //     boxes.pop();
     // }
 
-    darknet_ros_msgs::BoundingBoxesConstPtr boxes = _boxes;
+    darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr boxes = _boxes;
 
-    darknet_ros_msgs::BoundingBox box = boxes->bounding_boxes.front();
+    darknet_ros_msgs::msg::BoundingBox box = boxes->bounding_boxes.front();
     int lengh = boxes->bounding_boxes.size();
     for (int j = 0; j < lengh; j++)
     {
-        darknet_ros_msgs::BoundingBox box = boxes->bounding_boxes[j];
+        darknet_ros_msgs::msg::BoundingBox box = boxes->bounding_boxes[j];
         int xmin = box.xmin;
         int ymin = box.ymin;
         int xmax = box.xmax;

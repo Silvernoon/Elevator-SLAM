@@ -9,7 +9,7 @@
 
 #include "feature_manager.h"
 using namespace std;
-queue<nav_msgs::Odometry::ConstPtr> wheel_odom_buf;
+queue<nav_msgs::msg::Odometry::ConstSharedPtr> wheel_odom_buf;
 std::mutex m_wheel_odom;
 int lineFeaturePerId::endFrame() // line
 {
@@ -56,8 +56,8 @@ int FeatureManager::getFeatureCount()
 
 bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> &image, double td)
 {
-    ROS_DEBUG("input feature: %d", (int)image.size());
-    ROS_DEBUG("num of feature: %d", getFeatureCount());
+    RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "input feature: %d", (int)image.size());
+    RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "num of feature: %d", getFeatureCount());
     double parallax_sum = 0;
     int parallax_num = 0;
     last_track_num = 0;
@@ -108,8 +108,8 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
     }
     else
     {
-        ROS_DEBUG("parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
-        ROS_DEBUG("current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
         last_average_parallax = parallax_sum / parallax_num * FOCAL_LENGTH;
         return parallax_sum / parallax_num >= MIN_PARALLAX;
     }
@@ -117,9 +117,9 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
 
 bool FeatureManager::addFeatureCheckParallaxwithline(int frame_count, const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> &image, const map<int, vector<pair<int, Vector4d>>> &lines, double td)
 {
-    ROS_DEBUG("input point feature: %d", (int)image.size());
-    ROS_DEBUG("input line feature: %d", (int)lines.size());
-    ROS_DEBUG("num of feature: %d", getFeatureCount()); // 已有的特征数目
+    RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "input point feature: %d", (int)image.size());
+    RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "input line feature: %d", (int)lines.size());
+    RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "num of feature: %d", getFeatureCount()); // 已有的特征数目
     double parallax_sum = 0;
     int parallax_num = 0;
     last_track_num = 0;
@@ -188,8 +188,8 @@ bool FeatureManager::addFeatureCheckParallaxwithline(int frame_count, const map<
     }
     else
     {
-        ROS_DEBUG("parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
-        ROS_DEBUG("current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
+        RCLCPP_DEBUG(rclcpp::get_logger("vins_estimator"), "current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
         return parallax_sum / parallax_num >= MIN_PARALLAX;
     }
 }
@@ -404,11 +404,11 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
     }
 }
 
-void FeatureManager::linear_insert(Eigen::Quaterniond &Qodom, Eigen::Vector3d &Podom, const double sync_time, nav_msgs::Odometry::ConstPtr &front_data, nav_msgs::Odometry::ConstPtr &back_data)
+void FeatureManager::linear_insert(Eigen::Quaterniond &Qodom, Eigen::Vector3d &Podom, const double sync_time, nav_msgs::msg::Odometry::ConstSharedPtr &front_data, nav_msgs::msg::Odometry::ConstSharedPtr &back_data)
 {
 
-    double front_scale = (back_data->header.stamp.toSec() - sync_time) / (back_data->header.stamp.toSec() - front_data->header.stamp.toSec());
-    double back_scale = (sync_time - front_data->header.stamp.toSec()) / (back_data->header.stamp.toSec() - front_data->header.stamp.toSec());
+    double front_scale = (rclcpp::Time(back_data->header.stamp).seconds() - sync_time) / (rclcpp::Time(back_data->header.stamp).seconds() - rclcpp::Time(front_data->header.stamp).seconds());
+    double back_scale = (sync_time - rclcpp::Time(front_data->header.stamp).seconds()) / (rclcpp::Time(back_data->header.stamp).seconds() - rclcpp::Time(front_data->header.stamp).seconds());
     // ���Բ�ֵλ��
     // ֻ��ֵx,y����ת��z,w
     Podom << front_data->pose.pose.position.x * front_scale + back_data->pose.pose.position.x * back_scale,
@@ -425,7 +425,7 @@ void FeatureManager::linear_insert(Eigen::Quaterniond &Qodom, Eigen::Vector3d &P
     Qodom.normalize();
 }
 
-void FeatureManager::getOdomData(Eigen::Quaterniond &Q, Eigen::Vector3d &P, nav_msgs::Odometry::ConstPtr &odomData)
+void FeatureManager::getOdomData(Eigen::Quaterniond &Q, Eigen::Vector3d &P, nav_msgs::msg::Odometry::ConstSharedPtr &odomData)
 {
     // ȡ��ת
 
@@ -447,8 +447,8 @@ bool FeatureManager::getPoseByWheelOdom(Eigen::Vector3d &Pcam, Eigen::Matrix3d &
         return false;
     }
 
-    nav_msgs::Odometry::ConstPtr odomFront;
-    nav_msgs::Odometry::ConstPtr odomBack;
+    nav_msgs::msg::Odometry::ConstSharedPtr odomFront;
+    nav_msgs::msg::Odometry::ConstSharedPtr odomBack;
     Eigen::Quaterniond odomQ;
     Eigen::Vector3d odomP;
 
@@ -458,7 +458,7 @@ bool FeatureManager::getPoseByWheelOdom(Eigen::Vector3d &Pcam, Eigen::Matrix3d &
     Eigen::Matrix<double, 1, 3> Ttemp;
     wheel2Cam << 0, 0, 1, -1, 0, 0, 0, -1, 0;
 
-    if (curTime < wheel_odom_buf.front()->header.stamp.toSec() || wheel_odom_buf.back()->header.stamp.toSec() < curTime)
+    if (curTime < rclcpp::Time(wheel_odom_buf.front()->header.stamp).seconds() || rclcpp::Time(wheel_odom_buf.back()->header.stamp).seconds() < curTime)
     {
         printf("curtime odom data not push into wheel buf! \n ");
         return false;
@@ -469,9 +469,9 @@ bool FeatureManager::getPoseByWheelOdom(Eigen::Vector3d &Pcam, Eigen::Matrix3d &
         TicToc use_time;
 
         m_wheel_odom.lock();
-        while (wheel_odom_buf.front()->header.stamp.toSec() <= curTime)
+        while (rclcpp::Time(wheel_odom_buf.front()->header.stamp).seconds() <= curTime)
         {
-            if (wheel_odom_buf.front()->header.stamp.toSec() == curTime)
+            if (rclcpp::Time(wheel_odom_buf.front()->header.stamp).seconds() == curTime)
             {
                 getOdomData(odomQ, odomP, wheel_odom_buf.front());
                 // printf("get odom curtime data: q %f %f %f %f \n",odomQ.x(), odomQ.y(), odomQ.z(), odomQ.w());
@@ -706,7 +706,7 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             if (imu_i == imu_j)
                 continue;
         }
-        ROS_ASSERT(svd_idx == svd_A.rows());
+        assert(svd_idx == svd_A.rows());
         Eigen::Vector4d svd_V = Eigen::JacobiSVD<Eigen::MatrixXd>(svd_A, Eigen::ComputeThinV).matrixV().rightCols<1>();
         double svd_method = svd_V[2] / svd_V[3];
 
@@ -1077,7 +1077,7 @@ MatrixXd FeatureManager::getLineOrthVector(Vector3d Ps[], Vector3d tic[], Matrix
 
         int imu_i = it_per_id.start_frame;
 
-        ROS_ASSERT(NUM_OF_CAM == 1);
+        assert(NUM_OF_CAM == 1);
 
         Eigen::Vector3d twc = Ps[imu_i] + Rs[imu_i] * tic[0]; // twc = Rwi * tic + twi
         Eigen::Matrix3d Rwc = Rs[imu_i] * ric[0];             // Rwc = Rwi * Ric
@@ -1103,7 +1103,7 @@ void FeatureManager::setLineOrth(MatrixXd x, Vector3d P[], Matrix3d R[], Vector3
         Vector6d line_w = orth_to_plk(line_orth_w);
 
         int imu_i = it_per_id.start_frame;
-        ROS_ASSERT(NUM_OF_CAM == 1);
+        assert(NUM_OF_CAM == 1);
 
         Eigen::Vector3d twc = P[imu_i] + R[imu_i] * tic[0]; // twc = Rwi * tic + twi
         Eigen::Matrix3d Rwc = R[imu_i] * ric[0];            // Rwc = Rwi * Ric
@@ -1164,7 +1164,7 @@ void FeatureManager::triangulateLine(int frameCnt, Vector3d Ps[], Matrix3d Rs[],
         int imu_i = it_per_id.start_frame, imu_j = imu_i - 1;
         // cout<<"num of cam:"<<NUM_OF_CAM<<endl;
 
-        ROS_ASSERT(NUM_OF_CAM == 1);
+        assert(NUM_OF_CAM == 1);
 
         Eigen::Vector3d t0 = Ps[imu_i] + Rs[imu_i] * tic[0]; // twc = Rwi * tic + twi
         Eigen::Matrix3d R0 = Rs[imu_i] * ric[0];             // Rwc = Rwi * Ric
@@ -1382,7 +1382,7 @@ void FeatureManager::removeLineOutlier(Vector3d Ps[], Vector3d tic[], Matrix3d r
 
         int imu_i = it_per_id->start_frame, imu_j = imu_i - 1;
 
-        ROS_ASSERT(NUM_OF_CAM == 1);
+        assert(NUM_OF_CAM == 1);
 
         Eigen::Vector3d twc = Ps[imu_i] + Rs[imu_i] * tic[0]; // twc = Rwi * tic + twi
         Eigen::Matrix3d Rwc = Rs[imu_i] * ric[0];             // Rwc = Rwi * Ric

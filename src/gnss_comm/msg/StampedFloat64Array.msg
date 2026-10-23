@@ -1,4 +1,4 @@
 # A list of float values with timestamp
 
-Header header
+std_msgs/Header header
 float64[] data

@@ -261,15 +261,15 @@ bool MotionEstimator::solveRelativeRT_PNP(const vector<pair<Vector3d, Vector3d>>
     Matrix3d rota = Sophus::SO3d::exp(Vector3d(rvec.at<double>(0, 0), rvec.at<double>(1, 0), rvec.at<double>(2, 0))).matrix();
 
 
-    ROS_DEBUG_STREAM("-----------pnp-----------");
-    ROS_DEBUG_STREAM(lll.size());
-    ROS_DEBUG_STREAM(inliersArr.rows);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), "-----------pnp-----------");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), lll.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), inliersArr.rows);
 
     Rotation = rota.transpose();
     Translation = -rota.transpose() * tran;
 
-	ROS_DEBUG_STREAM(Rotation);
-	ROS_DEBUG_STREAM(Translation);
+	RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), Rotation);
+	RCLCPP_DEBUG_STREAM(rclcpp::get_logger("vins_estimator"), Translation);
     return true;
 }
 

@@ -36,20 +36,45 @@ camera + IMU -> vins -> odometry -------->                  -> /fusion/cloud_bod
 
 ## 构建
 
-当前系统入口面向 **ROS 1 Noetic / Ubuntu 20.04**。`lio` 自身保留 ROS 2 支持，但这里的 VIO、融合和建图尚未移植到 ROS 2，不能将整个工作空间直接用 colcon 当作 ROS 2 系统构建。
+系统入口已切换为 **ROS 2 Humble / Ubuntu 22.04**：10 个包使用 `ament_cmake` / `rosidl`，通过 Python launch 编排。`src/lio` 保留其已有 ROS 1/ROS 2 双版本实现；其余系统包不再提供 catkin 构建或 ROS 1 launch。
 
 ```bash
 # 已检出本仓库时，仅初始化已有 LIO 子模块。
 git submodule update --init --recursive src/lio
-source /opt/ros/noetic/setup.bash
-rosdep install --from-paths src --ignore-src -r -y
-catkin_make -DCMAKE_BUILD_TYPE=Release
-source devel/setup.bash
+source /opt/ros/humble/setup.bash
+# 先安装标准模板版 Sophus 和 Livox SDK2 / livox_ros_driver2，并 source 驱动工作空间。
+# Docker 环境已包含这些依赖，见下方。
+rosdep install --from-paths src --ignore-src --rosdistro humble --skip-keys "sophus livox_ros_driver2" -r -y
+CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
 ```
 
-依赖包含 Eigen、OpenCV 4（含 contrib 线特征接口）、PCL、Ceres（上游基线 1.14）、标准模板版 Sophus（`Sophus::Sophus` / `SO3d`，不是 no-template 分支）、fmt，以及 LIO 使用的 yaml-cpp、TBB、Qt5、nlohmann-json。网格模块还需要 CGAL、Boost；默认 headless，不需要 OpenGL 上下文。需要网格窗口时用 `catkin_make -DIM_MESH_BUILD_GUI=ON` 构建额外的 PCL visualization/VTK 路径；YOLO 可用 `-DVINS_BUILD_YOLO=OFF` 从构建中关闭，CUDA 仅在显式 `-DVINS_YOLO_CUDA=ON` 时启用。`rosdep` 无法安装的第三方库需先安装到 CMake 可发现的前缀，不再依赖开发机 `/usr/local/lib/*.so` 绝对路径。
+依赖包含 Eigen 3.4、OpenCV 4（含 contrib 线特征接口）、PCL 1.12、Ceres 2.0、标准模板版 Sophus（`Sophus::Sophus` / `SO3d`，不是 no-template 分支）、fmt，以及 LIO 使用的 yaml-cpp、TBB、Qt5、nlohmann-json。网格模块还需要 CGAL、Boost；默认 headless，不需要 OpenGL 上下文。需要网格窗口时用 `colcon build --packages-select im_mesh --cmake-args -DIM_MESH_BUILD_GUI=ON` 构建额外的 PCL visualization/VTK 路径；YOLO 可用 `-DVINS_BUILD_YOLO=OFF` 从构建中关闭，CUDA 仅在显式 `-DVINS_YOLO_CUDA=ON` 时启用。CUDA 路径需要宿主机/容器另行提供匹配的 CUDA 工具链；CPU 镜像不包含 CUDA。
 
 **LIO 子模块保存注意：**本次新增扫描消息和质量输出位于 `src/lio` 内。父仓库的 gitlink 只能保存子仓库 commit，不能保存未提交的子仓库工作区修改。发布这些改动时，需要先在 LIO 仓库提交、推送，再在父仓库更新指针；否则新克隆缺少 `LioFrame.msg`，无法构建融合节点。不要用当前尚未更新的旧 gitlink 重新检出覆盖这些工作区改动。
+
+### Docker 环境
+
+`docker/Dockerfile.humble` 安装 Humble 系统依赖，并固定 Sophus `1.22.10`、Livox SDK2 `v1.3.1` 和驱动 `1.2.6`。镜像不包含项目源码、数据集或 YOLO 权重；源码挂载后在容器内构建。
+
+```bash
+docker build -f docker/Dockerfile.humble -t elevator-slam:humble .
+docker run --rm -it --network host \
+  --user "$(id -u):$(id -g)" -e HOME=/ws/.docker-home \
+  -v "$PWD:/ws" elevator-slam:humble bash
+# 容器内：
+source /opt/ros/humble/setup.bash
+source /opt/livox/setup.bash
+mkdir -p "$HOME"
+CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+source install/setup.bash
+ctest --test-dir build/elevator_fusion --output-on-failure
+ctest --test-dir build/global_fusion --output-on-failure
+```
+
+网络受限时可传 `--build-arg ROS_APT_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu`；代理使用 Docker 标准 `HTTP_PROXY` / `HTTPS_PROXY` build args，不写入镜像。Docker Hub 解析失败与 ROS 编译无关，应先修复 Docker daemon 的网络；本机测试使用已安装的真实 Humble 根文件系统导入基础镜像，再实际执行上述 Dockerfile 的依赖安装/编译步骤。
+
+运行真实数据时另挂载 bag、标定和设备配置目录；launch 参数中的路径必须是容器内路径。图形窗口需要显式传入 `DISPLAY` 并挂载 X11 socket；默认无 GUI，不要求 `--privileged`。
 
 ## 标定与启动
 
@@ -65,16 +90,18 @@ source devel/setup.bash
 
 不提供虚构的通用外参数值。上游相机/数据集 YAML 是配置参考，不能替代当前设备标定。
 
+`extrinsics_file` 仍为普通 YAML 映射，不加 ROS 参数包装；launch 将其标定数组转为浮点参数。`fusion_config` / `mesh_config` 则使用 ROS 2 参数文件格式 `/**: {ros__parameters: ...}`。VIO 和 LIO 算法 YAML 保持原有 OpenCV / 自定义格式，不作为 ROS 参数文件直接加载。
+
 ### 完整系统
 
 ```bash
-roslaunch elevator_slam run.launch \
+ros2 launch elevator_slam run.launch.py \
   extrinsics_file:=/绝对路径/rig.yaml \
   lio_config:=root_config.yaml \
   vio_config:=/绝对路径/camera_sensor.yaml \
   rviz:=true
 # 另一个已 source 的终端：
-rosbag play --clock /绝对路径/sequence.bag
+ros2 bag play /绝对路径/sequence_ros2 --clock
 ```
 
 `lio_config` 按现有 LIO 配置机制，相对 `lio/yaml/`；修改其根配置选择对应传感器、运行时和日志 YAML。雷达时间单位、IMU/LiDAR 外参、相机内参、深度编码与单位、话题名都必须与数据一致。默认 `root_config.yaml` 是现有 Livox 配置，不是对所有 M3DGR/其他设备通用的配置。
@@ -89,21 +116,21 @@ rosbag play --clock /绝对路径/sequence.bag
 - `enable_global_fusion:=true`：另启绝对位置位姿图，默认关闭。
 - `show_mesh_gui:=true`：开启网格交互显示（需构建时启用 `IM_MESH_BUILD_GUI`），默认 headless。窗口支持空格暂停、`w` 切换线框、`s` 保存 PLY；无窗口时可调用 `/meshing/save_mesh` 保存。
 - `decompress_images:=false`：相机已经发布原始图像时关闭解压节点。
-- `use_sim_time:=false`：连接实时传感器而非 `rosbag --clock` 时使用。
+- `use_sim_time:=false`：连接实时传感器而非 `ros2 bag play --clock` 时使用；该参数显式传给每个节点。
 
 仅运行 LIO 与融合输出、不启用相机和建图：
 
 ```bash
-roslaunch elevator_slam run.launch enable_vio:=false enable_mesh:=false \
+ros2 launch elevator_slam run.launch.py enable_vio:=false enable_mesh:=false \
   enable_dense_map:=false decompress_images:=false
 ```
 
-单独运行 VIO：`roslaunch vins vio.launch config_file:=/绝对路径/camera_sensor.yaml`。
-YOLO 是独立可选节点，需真实网络权重且 VIO YAML 开启 `use_yolo`；不会在构建或启动时静默下载权重。
+单独运行 VIO：`ros2 launch vins vio.launch.py config_file:=/绝对路径/camera_sensor.yaml`。
+YOLO 是独立可选节点：`ros2 launch vins yolo.launch.py weights_path:=/绝对路径/weights`；需真实网络权重且 VIO YAML 开启 `use_yolo`，不会在构建或启动时静默下载权重。`/darknet_ros/check_for_objects` 使用原生 ROS 2 action；并发目标拒绝，取消作用于对应目标。检测消息字段从 ROS 1 的 `Class` 改为 `class_id`；GNSS 消息的 `A/OMG0/M0/OMG_dot/A_dot/CN0/LLI` 分别改为 `a/omg0/m0/omg_dot/a_dot/cn0/lli`，外部发布器也需更新。
 
-GNSS 在线对时按 `gnss_comm` 的 `T_SYS_*` 时钟编号处理（GPS 为 `0`，不是卫星系统位掩码 `SYS_*`），保留消息已序列化的绝对周历，再转换 UTC/BDT/GLONASS 时标；每条新鲜的下一 PPS 信息只与一个本地传感器触发配对。上游自动 `failureDetection()` 未启用的状态没有被包装成健康检测能力；显式重置使用 `/vins_estimator/restart` 的 `std_msgs/Bool(true)`，并通过 `restart_epoch` 通知消费者。
+GNSS 在线对时按 `gnss_comm` 的 `T_SYS_*` 时钟编号处理（GPS 为 `0`，不是卫星系统位掩码 `SYS_*`），保留消息已序列化的绝对周历，再转换 UTC/BDT/GLONASS 时标；每条新鲜的下一 PPS 信息只与一个本地传感器触发配对。上游自动 `failureDetection()` 未启用的状态没有被包装成健康检测能力；显式重置使用 `/vins_estimator/restart` 的 `std_msgs/msg/Bool(true)`，并通过 reliable / transient-local 的 `restart_epoch` 通知消费者。
 
-可选绝对位置图：`roslaunch global_fusion global.launch`。输入 `/tag_Odometry` 的位置必须是配置的 `global_frame` 中的 **IMU 原点位置**，不是未经外参转换的标签位置；时间戳取真实测量时刻。异步测量通过相邻轨迹位置插值关联，不要求浮点时间戳恰好相等。该模块没有把未实现的 GPS 订阅当作 GNSS 支持；原始 GNSS 融合保留在 VIO 模块。
+可选绝对位置图：`ros2 launch global_fusion global.launch.py`。输入 `/tag_Odometry` 的位置必须是配置的 `global_frame` 中的 **IMU 原点位置**，不是未经外参转换的标签位置；时间戳取真实测量时刻。异步测量通过相邻轨迹位置插值关联，不要求浮点时间戳恰好相等。该模块没有把未实现的 GPS 订阅当作 GNSS 支持；原始 GNSS 融合保留在 VIO 模块。单个位置锚点不约束全局旋转，不能将其视为完整全局姿态标定。
 
 ## 输出与时间语义
 
@@ -140,9 +167,9 @@ ctest --test-dir build-global --output-on-failure
 
 融合回归覆盖几何秩亏、历史环形缓存/插值边界、旋转世界系下的 LIO/VIO 切换、电梯点云高度、VIO 中断和重置。位置图回归覆盖异步绝对位置关联、未来观测及相对运动保持。
 
-本次集成已在非 ROS 环境用 Eigen 3.3.7、Ceres 1.14 实际编译两个核心并通过上述行为回归；另用逐扫描数据流消费者运行了 LIO→VIO→电梯→退出提交→VIO 重置/恢复，观察到融合位置连续、电梯点云高度只加一次、外部位置图继承正确偏移。当前环境没有 ROS，**尚未验证整个 catkin 工作空间编译、rosbag 实跑或 RViz/网格图形显示**；原生核心 smoke 不能替代这些系统验证。
+Humble Docker 内已实际编译所有包（含 CPU YOLO），另编译了可选网格 GUI；融合与绝对位置图两组核心回归通过。真实 DDS 消费者已验证：LIO/VIO 切换、电梯点云高度只加一次、强度字段保持、相差 1ns 的点云不误配、VIO epoch 重置连续性、异步绝对位置插值、headless 网格保存 PLY；VIO 图像/深度/IMU跟踪和重置恢复；RGB-D 融合路标校正、PCD/位姿图保存及序列切换；真实 CPU YOLO 权重推理、目标 ID/图像对应、并发拒绝和取消。原始 Livox/IMU 经系统 launch 和 `/clock` 实际产生了 LIO 快照、融合里程计和同时间戳点云。
 
-命名迁移后已重新编译并通过两组核心回归；另外完成 10 个 ROS 包的清单/依赖排序与 8 个 launch 的 XML/本地资源解析。GNSS 时钟转换也已用真实 `gnss_comm` 数学实现独立运行，覆盖 GPS 编号 `0`、Galileo 周历保持、BDT/UTC/GLONASS 时差与未知时标拒绝；这不代表已验证 GNSS 接收机和 ROS 触发链路。
+这些合成输入 smoke 不等于实际传感器精度评估；尚未完成真实电梯数据集回放、GNSS 接收机在线融合或 CUDA 推理验证。ROS 1 bag 不能直接由此系统作为原生 ROS 2 消息消费，需先转换 bag 与自定义消息。
 
 ## 许可证
 

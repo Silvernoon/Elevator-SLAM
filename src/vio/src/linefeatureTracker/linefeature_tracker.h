@@ -18,7 +18,7 @@
 #include <opencv2/imgproc/types_c.h>
 
 #include "line_descriptor_custom.hpp"
-#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/msg/point_stamped.hpp>
 using namespace cv::line_descriptor;
 using namespace std;
 using namespace cv;

@@ -2,6 +2,8 @@
 /devel*/
 /install*/
 /logs/
+/log/
+/.docker-home/
 /src/CMakeLists.txt
 __pycache__/
 *.pyc

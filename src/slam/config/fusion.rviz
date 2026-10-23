@@ -1,5 +1,5 @@
 Panels:
-  - Class: rviz/Displays
+  - Class: rviz_common/Displays
     Name: Displays
 Visualization Manager:
   Class: ""
@@ -8,29 +8,38 @@ Visualization Manager:
     Fixed Frame: fusion_world
     Frame Rate: 30
   Displays:
-    - Class: rviz/Grid
+    - Class: rviz_default_plugins/Grid
       Name: Ground grid
       Enabled: true
       Plane: XY
       Cell Size: 1
-    - Class: rviz/PointCloud2
+    - Class: rviz_default_plugins/PointCloud2
       Name: Fused scan
       Enabled: true
-      Topic: /fusion/cloud_world
-      Queue Size: 4
+      Topic:
+        Value: /fusion/cloud_world
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 4
       Style: Points
       Size (Pixels): 2
       Color Transformer: Intensity
       Position Transformer: XYZ
       Decay Time: 20
-    - Class: rviz/Odometry
+    - Class: rviz_default_plugins/Odometry
       Name: Fused odometry
       Enabled: true
-      Topic: /fusion/odometry
+      Topic:
+        Value: /fusion/odometry
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 10
       Keep: 200
   Views:
     Current:
-      Class: rviz/Orbit
+      Class: rviz_default_plugins/Orbit
       Distance: 20
       Pitch: 0.65
       Yaw: 0.8

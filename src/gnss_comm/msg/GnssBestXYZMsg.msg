@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 float64[] pos
 float64[] pos_sigma
 float64[] vel

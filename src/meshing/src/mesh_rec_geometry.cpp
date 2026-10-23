@@ -1,5 +1,6 @@
 #include "mesh_rec_geometry.hpp"
 #include <pcl/io/ply_io.h>
+#include <pcl/io/pcd_io.h>
 #include <tbb/tbb.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>

@@ -27,10 +27,9 @@
 #include "../estimator/parameters.h"
 #include "../utility/tic_toc.h"
 
-#include <darknet_ros_msgs/BoundingBox.h>
-#include <darknet_ros_msgs/BoundingBoxes.h>
-#include <darknet_ros_msgs/CheckForObjectsAction.h>
-#include <darknet_ros_msgs/ObjectCount.h>//box
+#include <darknet_ros_msgs/msg/bounding_box.hpp>
+#include <darknet_ros_msgs/msg/bounding_boxes.hpp>
+#include <darknet_ros_msgs/msg/object_count.hpp>
 
 using namespace std;
 using namespace camodocal;
@@ -45,7 +44,7 @@ class FeatureTracker
 public:
     FeatureTracker();
     map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
-    map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> trackImagebox(double _cur_time, const darknet_ros_msgs::BoundingBoxesConstPtr &_boxes,const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
+    map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> trackImagebox(double _cur_time, const darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr &_boxes,const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
     void setMask();
     void addPoints();
     void readIntrinsicParameter(const vector<string> &calib_file,const int depth);
@@ -62,9 +61,9 @@ public:
                                    vector<cv::Point2f> &curLeftPts, 
                                    vector<cv::Point2f> &curRightPts,
                                    map<int, cv::Point2f> &prevLeftPtsMap);
-    void drawTrackbox(const darknet_ros_msgs::BoundingBoxesConstPtr &_boxes,const cv::Mat &imLeft, const cv::Mat &imRight, 
+    void drawTrackbox(const darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr &_boxes,const cv::Mat &imLeft, const cv::Mat &imRight,
                                    vector<int> &curLeftIds,
-                                   vector<cv::Point2f> &curLeftPts, 
+                                   vector<cv::Point2f> &curLeftPts,
                                    vector<cv::Point2f> &curRightPts,
                                    map<int, cv::Point2f> &prevLeftPtsMap);
     void setPrediction(map<int, Eigen::Vector3d> &predictPts);

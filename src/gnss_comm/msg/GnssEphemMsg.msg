@@ -11,14 +11,14 @@ uint32 iodc
 uint32 health
 uint32 code
 float64 ura
-float64 A
+float64 a
 float64 e
 float64 i0
 float64 omg
-float64 OMG0
-float64 M0
+float64 omg0
+float64 m0
 float64 delta_n
-float64 OMG_dot
+float64 omg_dot
 float64 i_dot
 float64 cuc
 float64 cus
@@ -31,5 +31,5 @@ float64 af1
 float64 af2
 float64 tgd0
 float64 tgd1
-float64 A_dot
+float64 a_dot
 float64 n_dot

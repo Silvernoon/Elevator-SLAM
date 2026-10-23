@@ -8,7 +8,7 @@
  *******************************************************/
 
 #pragma once
-#include <ros/assert.h>
+#include <rclcpp/rclcpp.hpp>
 #include <iostream>
 #include <eigen3/Eigen/Dense>
 
@@ -72,7 +72,7 @@ class MotionFactor : public ceres::SizedCostFunction<2, 7, 7, 9,3>
 
                 if (jacobian_pose_i.maxCoeff() > 1e8 || jacobian_pose_i.minCoeff() < -1e8)
                 {
-                    ROS_WARN("numerical unstable in preintegration");
+                    RCLCPP_WARN(rclcpp::get_logger("vins"), "numerical unstable in preintegration");
                     //std::cout << sqrt_info << std::endl;
                     //ROS_BREAK();
                 }

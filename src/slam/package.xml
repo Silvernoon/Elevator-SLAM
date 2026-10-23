@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>elevator_slam</name>
   <version>0.1.0</version>
   <description>Ground-Fusion system composition with Elevator-LIO.</description>
   <maintainer email="xiaofan0100@sjtu.edu.cn">Yifan Zhang</maintainer>
   <license>GPL-3.0-or-later</license>
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>lio</exec_depend>
   <exec_depend>elevator_fusion</exec_depend>
   <exec_depend>vins</exec_depend>
@@ -15,5 +15,11 @@
   <exec_depend>image_transport</exec_depend>
   <exec_depend>compressed_image_transport</exec_depend>
   <exec_depend>compressed_depth_image_transport</exec_depend>
-  <exec_depend>rviz</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

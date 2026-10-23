@@ -8,13 +8,13 @@ Imported the RGB-D keyframe mapper, BRIEF/DBoW loop detector, 4-DoF/6-DoF
 Ceres pose graph and graph/descriptor/dense-point persistence from Ground-Fusion++
 revision aa1c8dc80b05df7a536f5759d2f7725ad12015a6. The actual binary
 brief_k10L6.bin vocabulary and its brief_pattern.yml are installed in resources/.
-The existing camera_models catkin package supplies camodocal; no second camera
+The existing camera_models ament package supplies camodocal; no second camera
 implementation or LIO source import is required.
 
 Launch contract
 ~~~~~~~~~~~~~~~
 
-roslaunch dense_map mapping.launch config_file:=/absolute/path/to/vio_config.yaml
+ros2 launch dense_map mapping.launch.py config_file:=/absolute/path/to/vio_config.yaml
 extrinsics_file:=/absolute/path/to/extrinsics.yaml
 
 The executable is dense_map_node and the node/private namespace is /dense_map.
@@ -23,6 +23,11 @@ resolved relative to that VIO YAML, or may be replaced with private camera_file.
 The shared extrinsics_file is optional as a launch argument, but calibrated
 extrinsic parameters are mandatory. It is loaded into the node's private
 namespace before optional explicit imu_t_camera launch override.
+The launch accepts use_sim_time (default false), loads plain shared calibration
+YAML as a parameter dictionary, and normalizes numeric calibration arrays to
+double precision. OpenCV algorithm YAML is passed as config_file, not interpreted
+as a ROS parameter file. Odometry is reliable; camera, depth and feature streams
+use SensorDataQoS. A single-threaded executor preserves callback serialization.
 
 Shared calibration parameter conventions:
 
@@ -93,7 +98,7 @@ per-keyframe _extrinsic.txt sidecar; reload consumes these calibration sidecars.
 Old upstream graph directories without sidecars are not silently interpreted
 under a different physical IMU calibration.
 
-output_path defaults to ~/.ros/dense_map in mapping.launch. pose_graph_save_path
+output_path defaults to ~/.ros/dense_map in mapping.launch.py. pose_graph_save_path
 defaults to output_path/pose_graph; cloud_save_path defaults to output_path/map.pcd;
 the loop-corrected trajectory is output_path/fusion_loop.txt. vocabulary_file and
 brief_pattern_file default to package-installed resources and can be overridden
@@ -109,11 +114,11 @@ by ray.z(), rather than assuming unit-z output from every camera model.
 Dependencies and licensing
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ROS1 Noetic catkin dependencies: roscpp, roslib, std_msgs, std_srvs, geometry_msgs,
-nav_msgs, sensor_msgs, visualization_msgs, camera_models, cv_bridge, pcl_ros,
-and pcl_conversions. System dependencies: OpenCV 4 (core/imgproc/imgcodecs/
-features2d/calib3d), Ceres, Eigen3, Boost filesystem/system, PCL common/io/octree/
-filters, and Threads. CMake flags, include paths and linkage are target scoped.
+ROS 2 Humble dependencies: ament_index_cpp, rclcpp, std_msgs, std_srvs,
+geometry_msgs, nav_msgs, sensor_msgs, visualization_msgs, camera_models, cv_bridge,
+pcl_conversions. System dependencies: OpenCV 4 (core/imgproc/imgcodecs/features2d/
+calib3d), Ceres, Eigen3, Boost filesystem/system, PCL common/io/octree/filters,
+and Threads. CMake flags, include paths and linkage are target scoped.
 No octomap dependency is needed: this mapper uses PCL's octree.
 
 The imported VINS code and resources retain the upstream GPLv3 LICENSE and

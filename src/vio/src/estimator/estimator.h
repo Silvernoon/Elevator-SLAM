@@ -12,9 +12,9 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
-#include <std_msgs/UInt32.h>
-#include <std_msgs/Header.h>
-#include <std_msgs/Float32.h>
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/u_int32.hpp>
+#include <std_msgs/msg/header.hpp>
 #include <ceres/ceres.h>
 #include <unordered_map>
 #include <queue>
@@ -47,10 +47,10 @@
 #include "../factor/line_parameterization.h" //line
 #include "../factor/line_projection_factor.h"
 
-#include <darknet_ros_msgs/BoundingBox.h>
-#include <darknet_ros_msgs/BoundingBoxes.h>
-#include <darknet_ros_msgs/CheckForObjectsAction.h>
-#include <darknet_ros_msgs/ObjectCount.h> //box
+#include <darknet_ros_msgs/msg/bounding_box.hpp>
+#include <darknet_ros_msgs/msg/bounding_boxes.hpp>
+#include <darknet_ros_msgs/action/check_for_objects.hpp>
+#include <darknet_ros_msgs/msg/object_count.hpp> //box
 
 // gnss new
 
@@ -89,7 +89,7 @@ struct RetriveData // line
 class Estimator
 {
 public:
-    Estimator();
+    explicit Estimator(const rclcpp::Node::SharedPtr &node);
     ~Estimator();
     void stop();
 
@@ -108,7 +108,7 @@ public:
     void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
     // void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
     void inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
-    void inputImagebox(double t, const darknet_ros_msgs::BoundingBoxesConstPtr &_boxes, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
+    void inputImagebox(double t, const darknet_ros_msgs::msg::BoundingBoxes::ConstSharedPtr &_boxes, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
     void inputImagewithline(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
     void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> &image, const double header);
@@ -262,7 +262,8 @@ public:
     std::thread trackThread;
     std::thread processThread;
     std::atomic<bool> stopping_{false};
-    ros::Publisher restart_pub_;
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Publisher<std_msgs::msg::UInt32>::SharedPtr restart_pub_;
     uint32_t restart_epoch_ = 0;
 
     FeatureTracker featureTracker;

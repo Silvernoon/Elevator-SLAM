@@ -19,9 +19,9 @@ using namespace std;
 #include <eigen3/Eigen/Dense>
 using namespace Eigen;
 
-#include <ros/console.h>
-#include <ros/assert.h>
-#include <nav_msgs/Odometry.h>
+#include <rclcpp/rclcpp.hpp>
+#include <cassert>
+#include <nav_msgs/msg/odometry.hpp>
 #include <mutex>
 #include <queue>
 #include "parameters.h"
@@ -188,10 +188,10 @@ public:
                         Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d);
   void initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
   bool getPoseByWheelOdom(Eigen::Vector3d& Pcam, Eigen::Matrix3d& Rcam, const double curTime);
-  void getOdomData(Eigen::Quaterniond& Q, Eigen::Vector3d& P, nav_msgs::Odometry::ConstPtr &odomData);
+  void getOdomData(Eigen::Quaterniond& Q, Eigen::Vector3d& P, nav_msgs::msg::Odometry::ConstSharedPtr &odomData);
   void initFramePoseByOdom(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[],const double curtime);
-  void linear_insert(Eigen::Quaterniond& Qodom, Eigen::Vector3d& Podom, const double sync_time, nav_msgs::Odometry::ConstPtr
-        & front_data, nav_msgs::Odometry::ConstPtr& back_data);
+  void linear_insert(Eigen::Quaterniond& Qodom, Eigen::Vector3d& Podom, const double sync_time, nav_msgs::msg::Odometry::ConstSharedPtr
+        & front_data, nav_msgs::msg::Odometry::ConstSharedPtr& back_data);
   bool solvePoseByPnP(Eigen::Matrix3d &R_initial, Eigen::Vector3d &P_initial,
                       vector<cv::Point2f> &pts2D, vector<cv::Point3f> &pts3D);
   void removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, Eigen::Vector3d new_P);
@@ -215,5 +215,5 @@ private:
 
 #endif
 
-extern queue<nav_msgs::Odometry::ConstPtr> wheel_odom_buf;
+extern queue<nav_msgs::msg::Odometry::ConstSharedPtr> wheel_odom_buf;
 extern std::mutex m_wheel_odom;

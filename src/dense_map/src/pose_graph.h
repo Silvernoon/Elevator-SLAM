@@ -23,12 +23,14 @@
 #include <ceres/rotation.h>
 #include <queue>
 #include <assert.h>
-#include <nav_msgs/Path.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <geometry_msgs/PointStamped.h>
-#include <nav_msgs/Odometry.h>
-#include <stdio.h>
-#include <ros/ros.h>
+#include <array>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <nav_msgs/msg/path.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/point_cloud.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include "keyframe.h"
 #include "utility/tic_toc.h"
 #include "utility/utility.h"
@@ -62,21 +64,21 @@ class PoseGraph
 public:
 	PoseGraph();
 	~PoseGraph();
-	void registerPub(ros::NodeHandle &n);
+	void registerPub(const rclcpp::Node::SharedPtr &node);
 	void addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);
 	void loadKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);
 	void loadVocabulary(std::string voc_path);
 	void setIMUFlag(bool _use_imu);
 	KeyFrame* getKeyFrame(int index);
-	nav_msgs::Path path[10];
-	nav_msgs::Path base_path;
+	std::array<nav_msgs::msg::Path, 10> path;
+	nav_msgs::msg::Path base_path;
 	CameraPoseVisualization* posegraph_visualization;
 	void savePoseGraph();
 	void loadPoseGraph();
 	void publish();
 	void stop();
 	void saveCloud(const std::string& path);
-	void rectifyCloud(sensor_msgs::PointCloud& points);
+	void rectifyCloud(sensor_msgs::msg::PointCloud& points);
 	Vector3d t_drift;
 	double yaw_drift;
 	Matrix3d r_drift;
@@ -114,13 +116,13 @@ private:
 
 	BriefDatabase db;
 	BriefVocabulary* voc = nullptr;
+  rclcpp::Clock::SharedPtr clock_;
 
-	ros::Publisher pub_pg_path;
-	ros::Publisher pub_base_path;
-	ros::Publisher pub_pose_graph;
-	ros::Publisher pub_path[10];
-	ros::Publisher pub_octree;
-	//ros::Publisher pub_octomap;
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_pg_path;
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_base_path;
+	rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_pose_graph;
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path[10];
+	rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_octree;
 };
 
 template <typename T> inline

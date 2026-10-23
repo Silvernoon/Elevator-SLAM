@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>im_mesh</name>
   <version>0.1.0</version>
   <description>ImMesh reconstruction driven only by external fused world clouds and IMU poses.</description>
   <maintainer email="xiaofan0100@sjtu.edu.cn">Yifan Zhang</maintainer>
   <license>GPL-2.0 with upstream ImMesh personal/academic and commercial-use terms; see LICENSE.ImMesh</license>
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>nav_msgs</depend>
@@ -14,7 +14,6 @@
   <depend>geometry_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>cv_bridge</depend>
-  <depend>pcl_ros</depend>
   <depend>pcl_conversions</depend>
   <depend>eigen</depend>
   <depend>libopencv-dev</depend>
@@ -22,4 +21,5 @@
   <depend>tbb</depend>
   <depend>libfmt-dev</depend>
   <depend>boost</depend>
+  <export><build_type>ament_cmake</build_type></export>
 </package>

@@ -11,7 +11,8 @@
 
 #pragma once
 
-#include <vector>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/image.hpp>
 #include <eigen3/Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/types_c.h>

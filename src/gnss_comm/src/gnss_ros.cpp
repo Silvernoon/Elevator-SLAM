@@ -17,11 +17,30 @@
 * You should have received a copy of the GNU General Public License
 * along with gnss_comm. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <builtin_interfaces/msg/time.hpp>
+#include <cmath>
+#include <cstdint>
 
 #include "gnss_ros.hpp"
 
 namespace gnss_comm
 {
+    builtin_interfaces::msg::Time to_builtin_time(const gtime_t &time)
+    {
+        const double seconds = time2sec(time);
+        std::int64_t whole_seconds = static_cast<std::int64_t>(std::floor(seconds));
+        std::int64_t nanoseconds = static_cast<std::int64_t>(std::llround((seconds - whole_seconds) * 1e9));
+        if (nanoseconds >= 1000000000LL)
+        {
+            ++whole_seconds;
+            nanoseconds -= 1000000000LL;
+        }
+        builtin_interfaces::msg::Time stamp;
+        stamp.sec = static_cast<std::int32_t>(whole_seconds);
+        stamp.nanosec = static_cast<std::uint32_t>(nanoseconds);
+        return stamp;
+    }
+
     GnssEphemMsg ephem2msg(const EphemPtr &ephem_ptr)
     {
         GnssEphemMsg ephem_msg;
@@ -44,14 +63,14 @@ namespace gnss_comm
         ephem_msg.health = ephem_ptr->health;
         ephem_msg.code = ephem_ptr->code;
         ephem_msg.ura = ephem_ptr->ura;
-        ephem_msg.A = ephem_ptr->A;
+        ephem_msg.a = ephem_ptr->A;
         ephem_msg.e = ephem_ptr->e;
         ephem_msg.i0 = ephem_ptr->i0;
         ephem_msg.omg = ephem_ptr->omg;
-        ephem_msg.OMG0 = ephem_ptr->OMG0;
-        ephem_msg.M0 = ephem_ptr->M0;
+        ephem_msg.omg0 = ephem_ptr->OMG0;
+        ephem_msg.m0 = ephem_ptr->M0;
         ephem_msg.delta_n = ephem_ptr->delta_n;
-        ephem_msg.OMG_dot = ephem_ptr->OMG_dot;
+        ephem_msg.omg_dot = ephem_ptr->OMG_dot;
         ephem_msg.i_dot = ephem_ptr->i_dot;
         ephem_msg.cuc = ephem_ptr->cuc;
         ephem_msg.cus = ephem_ptr->cus;
@@ -64,7 +83,7 @@ namespace gnss_comm
         ephem_msg.af2 = ephem_ptr->af2;
         ephem_msg.tgd0 = ephem_ptr->tgd[0];
         ephem_msg.tgd1 = ephem_ptr->tgd[1];
-        ephem_msg.A_dot = ephem_ptr->A_dot;
+        ephem_msg.a_dot = ephem_ptr->A_dot;
         ephem_msg.n_dot = ephem_ptr->n_dot;
         return ephem_msg;
     }
@@ -83,14 +102,14 @@ namespace gnss_comm
         ephem->health = gnss_ephem_msg->health;
         ephem->code = gnss_ephem_msg->code;
         ephem->ura = gnss_ephem_msg->ura;
-        ephem->A = gnss_ephem_msg->A;
+        ephem->A = gnss_ephem_msg->a;
         ephem->e = gnss_ephem_msg->e;
         ephem->i0 = gnss_ephem_msg->i0;
         ephem->omg = gnss_ephem_msg->omg;
-        ephem->OMG0 = gnss_ephem_msg->OMG0;
-        ephem->M0 = gnss_ephem_msg->M0;
+        ephem->OMG0 = gnss_ephem_msg->omg0;
+        ephem->M0 = gnss_ephem_msg->m0;
         ephem->delta_n = gnss_ephem_msg->delta_n;
-        ephem->OMG_dot = gnss_ephem_msg->OMG_dot;
+        ephem->OMG_dot = gnss_ephem_msg->omg_dot;
         ephem->i_dot = gnss_ephem_msg->i_dot;
         ephem->cuc = gnss_ephem_msg->cuc;
         ephem->cus = gnss_ephem_msg->cus;
@@ -103,7 +122,7 @@ namespace gnss_comm
         ephem->af2 = gnss_ephem_msg->af2;
         ephem->tgd[0] = gnss_ephem_msg->tgd0;
         ephem->tgd[1] = gnss_ephem_msg->tgd1;
-        ephem->A_dot = gnss_ephem_msg->A_dot;
+        ephem->A_dot = gnss_ephem_msg->a_dot;
         ephem->n_dot = gnss_ephem_msg->n_dot;
         return ephem;
     }
@@ -178,8 +197,8 @@ namespace gnss_comm
             obs_msg.time.tow = tow;
             obs_msg.sat     = obs->sat;
             obs_msg.freqs   = obs->freqs;
-            obs_msg.CN0     = obs->CN0;
-            obs_msg.LLI     = obs->LLI;
+            obs_msg.cn0     = obs->CN0;
+            obs_msg.lli     = obs->LLI;
             obs_msg.code    = obs->code;
             obs_msg.psr     = obs->psr;
             obs_msg.psr_std = obs->psr_std;
@@ -204,8 +223,8 @@ namespace gnss_comm
             obs->time       = gpst2time(obs_msg.time.week, obs_msg.time.tow);
             obs->sat        = obs_msg.sat;
             obs->freqs      = obs_msg.freqs;
-            obs->CN0        = obs_msg.CN0;
-            obs->LLI        = obs_msg.LLI;
+            obs->CN0        = obs_msg.cn0;
+            obs->LLI        = obs_msg.lli;
             obs->code       = obs_msg.code;
             obs->psr        = obs_msg.psr;
             obs->psr_std    = obs_msg.psr_std;
@@ -241,7 +260,7 @@ namespace gnss_comm
     GnssBestXYZMsg best_xyz2msg(const BestXYZPtr &best_xyz)
     {
         GnssBestXYZMsg gnss_best_xyz_msg;
-        gnss_best_xyz_msg.header.stamp = ros::Time(time2sec(best_xyz->time));
+        gnss_best_xyz_msg.header.stamp = to_builtin_time(best_xyz->time);
         gnss_best_xyz_msg.header.frame_id = "ECEF";
         for (size_t i = 0; i < 3; ++i)
         {
@@ -305,7 +324,7 @@ namespace gnss_comm
     {
         GnssSvsMsg svs_msg;
         if (svs.empty())    return svs_msg;
-        svs_msg.header.stamp = ros::Time(time2sec(svs[0].time));
+        svs_msg.header.stamp = to_builtin_time(svs[0].time);
         for (auto & sv : svs)
         {
             svs_msg.sat.push_back(sv.sat);

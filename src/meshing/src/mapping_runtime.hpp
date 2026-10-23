@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+namespace rclcpp { class Node; }
 #include <Eigen/Geometry>
 #include <opencv2/core.hpp>
 #include <pcl/point_cloud.h>
@@ -25,5 +26,5 @@ void ReconstructScan(const pcl::PointCloud<pcl::PointXYZI>& cloud,
                       const Eigen::Isometry3d& world_t_camera,
                       double image_stamp);
 #ifdef IM_MESH_WITH_GUI
-void RunMeshGui();
+void RunMeshGui(rclcpp::Node* node);
 #endif

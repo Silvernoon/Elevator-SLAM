@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include <ros/assert.h>
+#include <cassert>
 #include <ceres/ceres.h>
 #include <Eigen/Dense>
 #include "../utility/utility.h"
