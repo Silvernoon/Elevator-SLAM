@@ -1,5 +1,5 @@
 /*******************************************************
- * Native ROS 2 Humble RGB-D dense mapping node.
+ * Native ROS 2 Foxy RGB-D dense mapping node.
  *******************************************************/
 #include "pose_graph.h"
 #include "parameters.h"

@@ -32,8 +32,7 @@ if(ELEVATOR_FUSION_BUILD_ROS)
     target_link_libraries(trajectory_fusion PRIVATE elevator_fusion_core)
     ament_target_dependencies(trajectory_fusion PUBLIC
         geometry_msgs lio nav_msgs pcl_ros rclcpp sensor_msgs std_msgs tf2_ros)
-    rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-    target_link_libraries(trajectory_fusion PRIVATE "${cpp_typesupport_target}")
+    rosidl_target_interfaces(trajectory_fusion ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
     install(TARGETS elevator_fusion_core trajectory_fusion
         EXPORT export_elevator_fusion

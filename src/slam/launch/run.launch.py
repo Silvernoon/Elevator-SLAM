@@ -1,4 +1,4 @@
-"""Compose the native Humble estimation and mapping pipeline."""
+"""Compose the native Foxy estimation and mapping pipeline."""
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, EmitEvent, IncludeLaunchDescription, RegisterEventHandler
 from launch.conditions import IfCondition

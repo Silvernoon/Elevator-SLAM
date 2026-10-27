@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 project(vins LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,8 +46,7 @@ add_library(vins_estimator
 target_include_directories(vins_estimator PUBLIC src ${OpenCV_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
 ament_target_dependencies(vins_estimator PUBLIC rclcpp rclcpp_action std_msgs sensor_msgs geometry_msgs nav_msgs visualization_msgs tf2 tf2_ros cv_bridge camera_models image_transport darknet_ros_msgs gnss_comm builtin_interfaces)
 target_link_libraries(vins_estimator PUBLIC vins_line_descriptor Eigen3::Eigen Sophus::Sophus fmt::fmt ${OpenCV_LIBS} ${CERES_LIBRARIES} Threads::Threads)
-rosidl_get_typesupport_target(vins_typesupport ${PROJECT_NAME} rosidl_typesupport_cpp)
-target_link_libraries(vins_estimator PUBLIC "${vins_typesupport}")
+rosidl_target_interfaces(vins_estimator ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(vins_node src/vio_node.cpp)
 ament_target_dependencies(vins_node PUBLIC rclcpp std_msgs sensor_msgs nav_msgs cv_bridge darknet_ros_msgs gnss_comm)

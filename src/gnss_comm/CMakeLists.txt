@@ -39,8 +39,7 @@ target_include_directories(gnss_comm_lib PUBLIC
 target_include_directories(gnss_comm_lib PRIVATE include/gnss_comm)
 ament_target_dependencies(gnss_comm_lib PUBLIC rclcpp std_msgs builtin_interfaces)
 target_link_libraries(gnss_comm_lib PUBLIC Eigen3::Eigen glog::glog)
-rosidl_get_typesupport_target(gnss_comm_typesupport ${PROJECT_NAME} rosidl_typesupport_cpp)
-target_link_libraries(gnss_comm_lib PUBLIC "${gnss_comm_typesupport}")
+rosidl_target_interfaces(gnss_comm_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS gnss_comm_lib
   EXPORT export_gnss_comm

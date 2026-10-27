@@ -36,34 +36,36 @@ camera + IMU -> vins -> odometry -------->                  -> /fusion/cloud_bod
 
 ## 构建
 
-系统入口已切换为 **ROS 2 Humble / Ubuntu 22.04**：10 个包使用 `ament_cmake` / `rosidl`，通过 Python launch 编排。`src/lio` 保留其已有 ROS 1/ROS 2 双版本实现；其余系统包不再提供 catkin 构建或 ROS 1 launch。
+系统入口目标为 **ROS 2 Foxy / Ubuntu 20.04**：10 个包使用 `ament_cmake` / `rosidl`，通过 Python launch 编排。`src/lio` 保留其已有 ROS 1/ROS 2 双版本实现；其余系统包不再提供 catkin 构建或 ROS 1 launch。Foxy 是本次选择的 ROS 2 目标；Noetic 需要把其余系统包改写为 ROS 1，本次不做该迁移。
 
 ```bash
 # 已检出本仓库时，仅初始化已有 LIO 子模块。
 git submodule update --init --recursive src/lio
-source /opt/ros/humble/setup.bash
+source /opt/ros/foxy/setup.bash
 # 先安装标准模板版 Sophus 和 Livox SDK2 / livox_ros_driver2，并 source 驱动工作空间。
 # Docker 环境已包含这些依赖，见下方。
-rosdep install --from-paths src --ignore-src --rosdistro humble --skip-keys "sophus livox_ros_driver2" -r -y
+rosdep install --from-paths src --ignore-src --rosdistro foxy --skip-keys "sophus livox_ros_driver2" -r -y
 CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release
 source install/setup.bash
 ```
 
 依赖包含 Eigen 3.4、OpenCV 4（含 contrib 线特征接口）、PCL 1.12、Ceres 2.0、标准模板版 Sophus（`Sophus::Sophus` / `SO3d`，不是 no-template 分支）、fmt，以及 LIO 使用的 yaml-cpp、TBB、Qt5、nlohmann-json。网格模块还需要 CGAL、Boost；默认 headless，不需要 OpenGL 上下文。需要网格窗口时用 `colcon build --packages-select im_mesh --cmake-args -DIM_MESH_BUILD_GUI=ON` 构建额外的 PCL visualization/VTK 路径；YOLO 可用 `-DVINS_BUILD_YOLO=OFF` 从构建中关闭，CUDA 仅在显式 `-DVINS_YOLO_CUDA=ON` 时启用。CUDA 路径需要宿主机/容器另行提供匹配的 CUDA 工具链；CPU 镜像不包含 CUDA。
 
+LIO 的 ROS 2 消息链接使用 Foxy 提供的 `rosidl_target_interfaces()`，同时连接节点、仿真节点和 RViz 插件。若构建报 `Unknown CMake command "rosidl_get_typesupport_target"`，请同步 `src/lio/CMakeLists.txt` 的对应修改；这不是 Livox 安装路径错误。在 Humble 上该接口会产生弃用警告，但不阻止构建。该兼容修改已通过 Humble 容器中的 LIO 构建、安装及 `lio/msg/LioFrame` 接口查询；不代表已完成 Foxy 实机构建验证。
+
 **LIO 子模块保存注意：**本次新增扫描消息和质量输出位于 `src/lio` 内。父仓库的 gitlink 只能保存子仓库 commit，不能保存未提交的子仓库工作区修改。发布这些改动时，需要先在 LIO 仓库提交、推送，再在父仓库更新指针；否则新克隆缺少 `LioFrame.msg`，无法构建融合节点。不要用当前尚未更新的旧 gitlink 重新检出覆盖这些工作区改动。
 
 ### Docker 环境
 
-`docker/Dockerfile.humble` 安装 Humble 系统依赖，并固定 Sophus `1.22.10`、Livox SDK2 `v1.3.1` 和驱动 `1.2.6`。镜像不包含项目源码、数据集或 YOLO 权重；源码挂载后在容器内构建。
+`docker/Dockerfile.foxy` 安装 Foxy 系统依赖，并固定 Sophus `1.22.10`、Livox SDK2 `v1.3.1` 和驱动 `1.2.6`。Foxy 已停止维护；镜像面向 Ubuntu 20.04 / Focal，运行兼容性需按下方实际构建验证。镜像不包含项目源码、数据集或 YOLO 权重；源码挂载后在容器内构建。
 
 ```bash
-docker build -f docker/Dockerfile.humble -t elevator-slam:humble .
+docker build -f docker/Dockerfile.foxy -t elevator-slam:foxy .
 docker run --rm -it --network host \
   --user "$(id -u):$(id -g)" -e HOME=/ws/.docker-home \
-  -v "$PWD:/ws" elevator-slam:humble bash
+  -v "$PWD:/ws" elevator-slam:foxy bash
 # 容器内：
-source /opt/ros/humble/setup.bash
+source /opt/ros/foxy/setup.bash
 source /opt/livox/setup.bash
 mkdir -p "$HOME"
 CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
@@ -72,7 +74,7 @@ ctest --test-dir build/elevator_fusion --output-on-failure
 ctest --test-dir build/global_fusion --output-on-failure
 ```
 
-网络受限时可传 `--build-arg ROS_APT_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu`；代理使用 Docker 标准 `HTTP_PROXY` / `HTTPS_PROXY` build args，不写入镜像。Docker Hub 解析失败与 ROS 编译无关，应先修复 Docker daemon 的网络；本机测试使用已安装的真实 Humble 根文件系统导入基础镜像，再实际执行上述 Dockerfile 的依赖安装/编译步骤。
+网络受限时可传 `--build-arg ROS_APT_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu`；代理使用 Docker 标准 `HTTP_PROXY` / `HTTPS_PROXY` build args，不写入镜像。Foxy 已 EOL，旧软件源或依赖可能不可用；需以 Docker 实际构建结果确认，不可沿用 Humble 构建验证结论。
 
 运行真实数据时另挂载 bag、标定和设备配置目录；launch 参数中的路径必须是容器内路径。图形窗口需要显式传入 `DISPLAY` 并挂载 X11 socket；默认无 GUI，不要求 `--privileged`。
 
@@ -167,7 +169,7 @@ ctest --test-dir build-global --output-on-failure
 
 融合回归覆盖几何秩亏、历史环形缓存/插值边界、旋转世界系下的 LIO/VIO 切换、电梯点云高度、VIO 中断和重置。位置图回归覆盖异步绝对位置关联、未来观测及相对运动保持。
 
-Humble Docker 内已实际编译所有包（含 CPU YOLO），另编译了可选网格 GUI；融合与绝对位置图两组核心回归通过。真实 DDS 消费者已验证：LIO/VIO 切换、电梯点云高度只加一次、强度字段保持、相差 1ns 的点云不误配、VIO epoch 重置连续性、异步绝对位置插值、headless 网格保存 PLY；VIO 图像/深度/IMU跟踪和重置恢复；RGB-D 融合路标校正、PCD/位姿图保存及序列切换；真实 CPU YOLO 权重推理、目标 ID/图像对应、并发拒绝和取消。原始 Livox/IMU 经系统 launch 和 `/clock` 实际产生了 LIO 快照、融合里程计和同时间戳点云。
+此前 Humble 环境的构建与运行验证不构成 Foxy 验证。切换 Foxy 后，必须在 Foxy/Focal 环境重新构建并执行本节列出的运行检查；当前没有将旧版验证结果标记为 Foxy 通过。
 
 这些合成输入 smoke 不等于实际传感器精度评估；尚未完成真实电梯数据集回放、GNSS 接收机在线融合或 CUDA 推理验证。ROS 1 bag 不能直接由此系统作为原生 ROS 2 消息消费，需先转换 bag 与自定义消息。
 

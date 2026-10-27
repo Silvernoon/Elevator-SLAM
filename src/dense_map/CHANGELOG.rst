@@ -114,7 +114,7 @@ by ray.z(), rather than assuming unit-z output from every camera model.
 Dependencies and licensing
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ROS 2 Humble dependencies: ament_index_cpp, rclcpp, std_msgs, std_srvs,
+ROS 2 Foxy dependencies: ament_index_cpp, rclcpp, std_msgs, std_srvs,
 geometry_msgs, nav_msgs, sensor_msgs, visualization_msgs, camera_models, cv_bridge,
 pcl_conversions. System dependencies: OpenCV 4 (core/imgproc/imgcodecs/features2d/
 calib3d), Ceres, Eigen3, Boost filesystem/system, PCL common/io/octree/filters,
